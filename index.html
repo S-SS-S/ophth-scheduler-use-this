@@ -1,624 +1,158 @@
 <!doctype html>
-<html lang="ar" dir="rtl" class="light">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ophth-Scheduler | حاسبة مواعيد العيون</title>
-  <meta name="description" content="Ophthalmology visit scheduler in Arabic/English with diabetes severity, anti-VEGF, HbA1c, retinal laser, and more." />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: { extend: { fontFamily: { sans: ["Tajawal","system-ui","-apple-system","Segoe UI","Roboto","Arial"] } } }
-    }
-  </script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
-  <style>
-    html { scroll-behavior: smooth; }
-    .error-text{color:#dc2626;font-size:12px;margin-top:.25rem}
-    .invalid{outline:0;box-shadow:0 0 0 4px rgba(244,63,94,.25);border-color:#ef4444}
-    @media print{html{color-scheme:light}body{background:#fff!important}.no-print{display:none!important}}
-    /* helper for chip checked style */
-    .chip{ @apply px-3 py-1.5 rounded-full border text-sm cursor-pointer select-none transition; }
-    .chip-off{ @apply bg-white text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600; }
-    .chip-on{ @apply bg-indigo-600 text-white border-indigo-600; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>حاسبة مواعيد زيارة طبيب العيون</title>
+  <meta name="description" content="حاسبة ثنائية اللغة لتقدير مواعيد المتابعة الروتينية لدى طبيب العيون.">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="color-scheme" content="light dark">
+  <link rel="canonical" href="https://www.opth.net/">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.opth.net/">
+  <meta property="og:title" content="Ophth-Scheduler">
+  <meta property="og:description" content="Bilingual ophthalmology follow-up scheduler.">
+  <meta property="og:image" content="https://www.opth.net/icon.svg">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ophth-Scheduler","url":"https://www.opth.net/","applicationCategory":"HealthApplication","operatingSystem":"Any","inLanguage":["ar","en"]}</script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-indigo-50 text-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 dark:text-slate-100">
-  <header class="max-w-5xl mx-auto px-4 pt-8">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <h1 id="title" class="text-2xl md:text-3xl font-bold">حاسبة مواعيد زيارة طبيب العيون</h1>
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Language -->
-        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600">
-          <button id="lang-ar" class="font-medium" type="button" onclick="setLang('ar')">العربية</button>
-          <span class="mx-1">|</span>
-          <button id="lang-en" type="button" onclick="setLang('en')">English</button>
+<body>
+  <header class="site-header">
+    <nav class="container nav" aria-label="Primary navigation">
+      <a class="brand" href="/" aria-label="Ophth-Scheduler home">
+        <img src="/icon.svg" alt="">
+        <span><strong>Ophth-Scheduler</strong><span>Routine eye follow-up guidance</span></span>
+      </a>
+      <div class="toolbar">
+        <div class="segmented" aria-label="Language">
+          <button id="lang-ar" type="button">العربية</button>
+          <button id="lang-en" type="button">English</button>
         </div>
-        <!-- Theme -->
-        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600" title="Theme">
-          <button id="theme-light" class="font-medium" type="button" onclick="setTheme('light')">Light</button>
-          <span class="mx-1">/</span>
-          <button id="theme-dark" type="button" onclick="setTheme('dark')">Dark</button>
+        <div class="icon-group" aria-label="Appearance">
+          <button id="theme-light" type="button" aria-label="Light mode">☀</button>
+          <button id="theme-dark" type="button" aria-label="Dark mode">☾</button>
         </div>
-
-        <!-- TEXT SIZE CONTROLS (Stepper + Presets) -->
-        <div class="flex flex-col">
-          <!-- Stepper -->
-          <div class="inline-flex items-center gap-3 rounded-full px-3 py-1 text-sm border border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-600">
-            <button id="fontMinus" type="button" class="px-2 rounded-md border border-slate-300 dark:border-slate-600" onclick="decFont()">أ−</button>
-            <div class="min-w-[3.5ch] text-sm tabular-nums text-slate-600 dark:text-slate-300" id="fontPct">100%</div>
-            <button id="fontPlus"  type="button" class="px-2 rounded-md border border-slate-300 dark:border-slate-600" onclick="incFont()">أ+</button>
-            <button id="fontReset" type="button" class="text-xs underline decoration-dotted" onclick="resetFont()">إرجاع 100%</button>
-          </div>
-          <!-- Presets -->
-          <div class="mt-2 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="اختيار حجم النص">
-            <input class="sr-only" type="radio" name="fontPreset" id="presetS" value="90">
-            <label id="chipS" class="chip chip-off" for="presetS">صغير</label>
-            <input class="sr-only" type="radio" name="fontPreset" id="presetD" value="100" checked>
-            <label id="chipD" class="chip chip-on" for="presetD">افتراضي</label>
-            <input class="sr-only" type="radio" name="fontPreset" id="presetL" value="120">
-            <label id="chipL" class="chip chip-off" for="presetL">كبير</label>
-            <input class="sr-only" type="radio" name="fontPreset" id="presetXL" value="140">
-            <label id="chipXL" class="chip chip-off" for="presetXL">أكبر</label>
-          </div>
-          <div id="fontHelp" class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">اضبط الحجم بالأزرار أو اختر حجمًا محددًا.</div>
+        <div class="icon-group" aria-label="Text size">
+          <button id="fontMinus" type="button" aria-label="Decrease text size">A−</button>
+          <span id="fontPct" aria-live="polite">100%</span>
+          <button id="fontPlus" type="button" aria-label="Increase text size">A+</button>
+          <button id="fontReset" type="button" aria-label="Reset text size">↺</button>
         </div>
-        <!-- /TEXT SIZE CONTROLS -->
       </div>
-    </div>
-    <p id="subtitle" class="mt-2 text-slate-600 dark:text-slate-300">اختر الحالات، أدخل عمرك/فئتك العمرية وتاريخ آخر زيارة، وسنحسب أقرب موعد.</p>
+    </nav>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 py-6">
-    <!-- CONTACT BOX -->
-    <div class="mb-4">
-      <details class="bg-white/80 dark:bg-slate-900/70 backdrop-blur shadow-lg rounded-2xl border border-gray-200 dark:border-slate-700 p-4 w-full sm:w-auto sm:min-w-[260px] ml-auto">
-        <summary id="contactSummary" class="cursor-pointer select-none text-sm font-medium flex items-center justify-between">
-          تواصل <span aria-hidden="true">▾</span>
-        </summary>
-        <div class="mt-3 text-sm space-y-1">
-          <div><span id="contactEmailLabel">البريد الإلكتروني</span>:
-            <a href="mailto:Sultan.Alhassan@hotmail.com" class="underline break-all" dir="ltr">Sultan.Alhassan@hotmail.com</a>
+  <main>
+    <section class="container hero">
+      <div>
+        <span class="eyebrow" data-i18n="eyebrow">أداة تثقيفية ثنائية اللغة</span>
+        <h1 data-i18n="heroTitle">اعرف موعد متابعة عيونك بطريقة أوضح</h1>
+        <p data-i18n="heroText">أدخل معلومات المتابعة الروتينية، واختر الحالات ذات الصلة، وستعرض الأداة أقرب موعد مقترح مع سبب واضح.</p>
+      </div>
+      <aside class="hero-card" aria-label="Privacy summary">
+        <img src="/icon.svg" alt="">
+        <div class="hero-stat"><strong>100%</strong><span data-i18n="heroStat">الحساب يتم محليًا في جهازك</span></div>
+      </aside>
+    </section>
+
+    <section class="container notice" role="alert">
+      <span aria-hidden="true">⚠</span>
+      <div><strong data-i18n="urgentTitle">لا تستخدم الحاسبة للأعراض العاجلة</strong><p data-i18n="urgentText">فقدان النظر المفاجئ، الستارة أو الظل، الومضات أو العوائم الجديدة، الألم الشديد، إصابة العين أو التعرض للمواد الكيميائية تتطلب تقييمًا عاجلًا.</p></div>
+    </section>
+
+    <div class="container layout">
+      <section class="card form-card">
+        <form id="schedulerForm" novalidate>
+          <section class="form-section">
+            <div class="section-heading"><span class="step">1</span><div><h2 data-i18n="step1">معلوماتك الأساسية</h2><p data-i18n="step1Help">اختر تاريخ الميلاد أو الفئة العمرية، ثم أدخل تاريخ آخر زيارة.</p></div></div>
+            <div class="grid-2">
+              <div>
+                <label class="check-row"><input id="ageGroupToggle" type="checkbox"><span data-i18n="ageToggle">استخدام الفئة العمرية بدلًا من تاريخ الميلاد</span></label>
+                <div id="dobWrap" class="field">
+                  <label for="dob" data-i18n="dob">تاريخ الميلاد</label>
+                  <input id="dob" type="date" autocomplete="bday">
+                  <p class="help" data-i18n="dobHelp">تُستخدم فقط لحساب العمر داخل المتصفح.</p>
+                  <p id="dobError" class="error hidden" role="alert"></p>
+                </div>
+                <div id="ageGroupWrap" class="field hidden">
+                  <label for="ageGroup" data-i18n="ageGroup">الفئة العمرية</label>
+                  <select id="ageGroup"><option value="u40">&lt; 40</option><option value="40-54">40–54</option><option value="55-64">55–64</option><option value=">=65">≥65</option></select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="lastVisit" data-i18n="lastVisit">تاريخ آخر زيارة لطبيب العيون</label>
+                <input id="lastVisit" type="date">
+                <label class="check-row"><input id="noOphthVisit" type="checkbox"><span data-i18n="noVisit">لا توجد لدي زيارة سابقة لطبيب العيون</span></label>
+                <p class="help" data-i18n="lastHelp">لا يمكن أن يكون التاريخ في المستقبل.</p>
+                <p id="lastVisitError" class="error hidden" role="alert"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-section">
+            <div class="section-heading"><span class="step">2</span><div><h2 data-i18n="step2">الحالات ذات الصلة</h2><p data-i18n="step2Help">يمكن اختيار أكثر من حالة، وسنعرض أقرب موعد.</p></div></div>
+            <div class="conditions">
+              <label class="condition"><input id="c_t1dm" type="checkbox"><span><strong id="tx_t1dm"></strong><small id="sub_t1dm"></small></span></label>
+              <label class="condition"><input id="c_t2dm" type="checkbox"><span><strong id="tx_t2dm"></strong><small id="sub_t2dm"></small></span></label>
+              <label class="condition"><input id="c_antiVEGF" type="checkbox"><span><strong id="tx_antiVEGF"></strong><small id="sub_antiVEGF"></small></span></label>
+              <label class="condition"><input id="c_hba1c" type="checkbox"><span><strong id="tx_hba1c"></strong><small id="sub_hba1c"></small></span></label>
+              <label class="condition"><input id="c_glp1" type="checkbox"><span><strong id="tx_glp1"></strong><small id="sub_glp1"></small></span></label>
+              <label class="condition"><input id="c_glauSus" type="checkbox"><span><strong id="tx_glauSus"></strong><small id="sub_glauSus"></small></span></label>
+              <label class="condition"><input id="c_fhGlau" type="checkbox"><span><strong id="tx_fhGlau"></strong><small id="sub_fhGlau"></small></span></label>
+              <label class="condition"><input id="c_highMy" type="checkbox"><span><strong id="tx_highMy"></strong><small id="sub_highMy"></small></span></label>
+              <label class="condition"><input id="c_ted" type="checkbox"><span><strong id="tx_ted"></strong><small id="sub_ted"></small></span></label>
+              <label class="condition"><input id="c_retLaser" type="checkbox"><span><strong id="tx_retLaser"></strong><small id="sub_retLaser"></small></span></label>
+              <label class="condition"><input id="c_noRisk" type="checkbox"><span><strong id="tx_noRisk"></strong><small id="sub_noRisk"></small></span></label>
+            </div>
+          </section>
+
+          <section id="conditionalFields" class="form-section hidden">
+            <div class="section-heading"><span class="step">3</span><div><h2 data-i18n="step3">تفاصيل إضافية</h2><p data-i18n="step3Help">تظهر فقط عند الحاجة.</p></div></div>
+            <div id="dmExtra" class="extras hidden">
+              <span class="field-label" data-i18n="severity">شدة السكري</span>
+              <div class="radio-grid">
+                <label><input type="radio" name="dmSeverity" value="severe"><span data-i18n="severe">شديد — 3 أشهر</span></label>
+                <label><input type="radio" name="dmSeverity" value="moderate"><span data-i18n="moderate">متوسط — 6 أشهر</span></label>
+                <label><input type="radio" name="dmSeverity" value="mild"><span data-i18n="mild">بسيط — 9 أشهر</span></label>
+                <label><input type="radio" name="dmSeverity" value="unknown" checked><span data-i18n="unknown">لا أعرف — سنة</span></label>
+              </div>
+            </div>
+            <div id="tedExtra" class="extras hidden"><label class="check-row"><input id="tedActive" type="checkbox"><span data-i18n="tedActive">مرض العين الدرقي نشط حاليًا</span></label></div>
+          </section>
+
+          <div class="actions">
+            <button id="btnCalc" class="btn btn-primary" type="button" data-i18n="calculate">احسب موعد الزيارة القادمة</button>
+            <button id="resetBtn" class="btn" type="button" data-i18n="reset">إعادة ضبط</button>
           </div>
-          <div><span id="contactPhoneLabel">الهاتف</span>:
-            <a href="https://wa.me/+966564215644" class="underline" dir="ltr">+966564215644</a>
-          </div>
-        </div>
-      </details>
+        </form>
+      </section>
+
+      <aside class="card side-card">
+        <h3 data-i18n="howTitle">كيف تعمل الحاسبة؟</h3>
+        <ul class="side-list"><li><span>✓</span><span data-i18n="how1">تُجرى الحسابات في متصفحك.</span></li><li><span>✓</span><span data-i18n="how2">عند تعدد الحالات نستخدم أقرب موعد.</span></li><li><span>✓</span><span data-i18n="how3">التوصية لا تتجاوز تعليمات الطبيب.</span></li></ul>
+        <div class="contact-list"><h3 data-i18n="contact">تواصل</h3><p><span data-i18n="email">البريد الإلكتروني</span><br><a href="mailto:Sultan.Alhassan@hotmail.com">Sultan.Alhassan@hotmail.com</a></p><p><span data-i18n="phone">واتساب</span><br><a href="https://wa.me/966564215644" rel="noopener">+966 56 421 5644</a></p></div>
+      </aside>
     </div>
-    <!-- END CONTACT BOX -->
 
-    <!-- === FORM === -->
-    <section class="bg-white/80 dark:bg-slate-900/70 backdrop-blur shadow-lg rounded-2xl border border-gray-200 dark:border-slate-700 p-5 md:p-6">
-      <form id="schedulerForm" class="space-y-6" novalidate>
-        <div class="grid md:grid-cols-2 gap-4">
-          <div class="space-y-3">
-            <div class="flex items-center gap-2">
-              <input id="ageGroupToggle" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" onclick="toggleAgeMode()" />
-              <label for="ageGroupToggle" id="lblAgeGroupToggle" class="text-sm">استخدام الفئة العمرية بدلاً من تاريخ الميلاد</label>
-            </div>
-            <div id="dobWrap" class="space-y-2">
-              <label for="dob" id="lblDob" class="block text-sm font-medium">تاريخ الميلاد</label>
-              <input id="dob" name="dob" type="date" class="w-full rounded-2xl border-2 border-slate-300/90 bg-white dark:bg-slate-800 h-12 text-base px-4 focus:outline-none focus:ring-4 focus:ring-indigo-200 dark:focus:ring-indigo-900 focus:border-indigo-600" />
-              <p id="helpDob" class="text-xs text-slate-500">يُستخدم لحساب الفئة العمرية.</p>
-              <p id="dobError" class="error-text hidden" aria-live="polite"></p>
-            </div>
-            <div id="ageGroupWrap" class="space-y-2 hidden">
-              <label for="ageGroup" id="lblAgeGroup" class="block text-sm font-medium">الفئة العمرية</label>
-              <select id="ageGroup" class="w-full rounded-2xl border-2 border-slate-300/90 dark:border-slate-600 bg-white dark:bg-slate-800 h-12 text-base px-4 focus:outline-none focus:ring-4 focus:ring-indigo-200 dark:focus:ring-indigo-900 focus:border-indigo-600">
-                <option value="u40">&lt; 40</option>
-                <option value="40-54">40–54</option>
-                <option value="55-64">55–64</option>
-                <option value=">=65">≥65</option>
-              </select>
-              <p id="helpAgeGroup" class="text-xs text-slate-500">اختر فقط إذا لم ترغب بإدخال تاريخ الميلاد.</p>
-            </div>
-          </div>
-
-          <div class="space-y-2" id="lastVisitWrap">
-            <label for="lastVisit" class="block text-sm font-medium">
-              <span id="lblLastVisit">تاريخ آخر زيارة لطبيب العيون</span> <span class="text-rose-600" aria-hidden="true">*</span>
-            </label>
-            <input id="lastVisit" name="lastVisit" type="date" class="w-full rounded-2xl border-2 border-slate-300/90 dark:border-slate-600 bg-white dark:bg-slate-800 h-12 text-base px-4 focus:outline-none focus:ring-4 focus:ring-indigo-200 dark:focus:ring-indigo-900 focus:border-indigo-600" aria-describedby="lastVisitHelp lastVisitError" />
-            <label class="inline-flex items-center gap-2 text-sm mt-1">
-              <input id="noOphthVisit" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" onclick="onNoVisitToggle()" />
-              <span id="lblNoOphthVisit">لا توجد لدي زيارات سابقة لطبيب العيون</span>
-            </label>
-            <p id="helpLastVisit" class="text-xs text-slate-500">مثال: 2024-12-05. لا تقبل تاريخًا مستقبليًا.</p>
-            <p id="lastVisitError" class="error-text hidden" aria-live="polite"></p>
-          </div>
-        </div>
-
-        <!-- Conditions -->
-        <div>
-          <h2 id="condHeader" class="text-lg font-semibold mb-2">اختر الحالات/الظروف لديك</h2>
-          <p id="condHelper" class="text-sm text-slate-600 dark:text-slate-300 mb-3">يمكنك اختيار أكثر من حالة؛ سنعرض أقرب موعد.</p>
-
-          <div class="grid sm:grid-cols-2 gap-2" id="condsBox">
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_t1dm" onclick="toggleExtra()" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_t1dm">السكري النوع الأول (بالغون)</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_t2dm" onclick="toggleExtra()" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_t2dm">السكري النوع الثاني (بالغون)</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_antiVEGF" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_antiVEGF">مضادات عامل نمو بطانة الأوعية الدموية ( حقن داخل العين )</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_hba1c" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_hba1c">السكر التراكمي أعلى من الطبيعي</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_glp1" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_glp1">استخدام أوزمبيك/مونجارُو</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_glauSus" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_glauSus">مشتبه ماء أزرق / ارتفاع ضغط العين</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_fhGlau" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_fhGlau">قرابة درجة أولى لمريض ماء أزرق</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_highMy" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_highMy">قصر نظر شديد (≤ −6.0D أو طول محوري &gt; 26 مم)</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_ted" onclick="toggleExtra()" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_ted">مرض عين درقي (غريفز)</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_retLaser" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_retLaser">إجراء ليزر للشبكية</span></label>
-            <label class="inline-flex items-start gap-2 text-sm"><input type="checkbox" id="c_noRisk" class="mt-1 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="tx_noRisk">بالغون بلا عوامل خطورة</span></label>
-          </div>
-        </div>
-
-        <!-- Conditional extra fields -->
-        <div id="conditionalFields" class="space-y-4 hidden">
-          <!-- Diabetes severity -->
-          <div id="extra-dm-severity" class="hidden">
-            <label id="lblDmSeverity" class="block text-sm font-medium mb-1">شدة السكري (لاعتلال الشبكية)</label>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="dmSeverity" value="severe" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="optSevere">شديد (زيارة خلال 3 أشهر)</span></label>
-              <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="dmSeverity" value="moderate" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="optModerate">متوسط (خلال 6 أشهر)</span></label>
-              <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="dmSeverity" value="mild" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="optMild">بسيط (خلال 9 أشهر)</span></label>
-              <label class="inline-flex items-center gap-2 text-sm"><input type="radio" name="dmSeverity" value="unknown" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" /><span id="optUnknown">لا أعرف (سنة واحدة)</span></label>
-            </div>
-          </div>
-
-          <!-- Thyroid eye disease active? -->
-          <div id="extra-ted" class="hidden">
-            <div class="flex items-center gap-2">
-              <input id="tedActive" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-              <label id="lblTedActive" for="tedActive" class="text-sm">نشِط حاليًا (مرض عين درقي)</label>
-            </div>
-            <p id="helpTed" class="text-xs text-slate-500 mt-1">نشِط: كل 3–6 أشهر. مستقر: سنوي.</p>
-          </div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex flex-wrap items-center gap-3 pt-2">
-          <button type="button" id="btnCalc" class="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" onclick="onCalc()">احسب الزيارة القادمة</button>
-          <button type="button" id="resetBtn" class="px-4 py-2 rounded-xl border bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700" onclick="onReset()">إعادة ضبط</button>
-        </div>
-      </form>
+    <section id="resultsCard" class="container card result hidden" aria-live="polite">
+      <div class="result-header"><h2 data-i18n="result">النتيجة</h2><label class="check-row"><input id="earliestOnly" type="checkbox"><span data-i18n="earliestOnly">عرض الأقرب فقط</span></label></div>
+      <div class="result-tools"><button id="copyBtn" class="btn" type="button" data-i18n="copyShare">نسخ / مشاركة</button><button id="icsBtn" class="btn" type="button" data-i18n="calendar">إضافة إلى التقويم</button><button id="printBtn" class="btn" type="button" data-i18n="print">طباعة / حفظ PDF</button></div>
+      <div id="summary" class="summary"></div>
+      <div id="dueBanner" class="status hidden"></div>
+      <div id="details" class="details"></div>
+      <div class="disclaimer" data-i18n="disclaimer">تنبيه: هذه أداة تثقيفية ولا تُغني عن التقييم الطبي أو تعليمات طبيب العيون المعالج.</div>
     </section>
-
-    <!-- === RESULTS === -->
-    <section id="resultsCard" class="bg-white/80 dark:bg-slate-900/70 backdrop-blur shadow-lg rounded-2xl border border-gray-200 dark:border-slate-700 p-5 md:p-6 mt-6 hidden">
-      <h2 id="resultsTitle" class="text-xl font-semibold">النتيجة</h2>
-
-      <div class="no-print mt-3 p-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800">
-        <div id="actionsTitle" class="text-sm font-medium mb-2">أدوات النتيجة</div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl border bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 w-full border-2 border-slate-400 dark:border-slate-500" onclick="copyShare()">Copy / Share</button>
-          <button id="icsBtn" type="button" class="px-4 py-2 rounded-xl border bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 w-full border-2 border-slate-400 dark:border-slate-500" onclick="downloadIcs()">Add to Calendar (.ics)</button>
-          <button id="printBtn" type="button" class="px-4 py-2 rounded-xl border bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 w-full border-2 border-slate-400 dark:border-slate-500" onclick="window.print()">طباعة/حفظ PDF</button>
-        </div>
-        <label class="mt-3 inline-flex items-center gap-2 text-sm">
-          <input id="earliestOnly" type="checkbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" onclick="rebuildAfterToggle()" />
-          <span id="lblEarliestOnly">عرض الأقرب فقط</span>
-        </label>
-      </div>
-
-      <p id="ruleExplain" class="mt-4 text-sm text-slate-600 dark:text-slate-300">عند تعدد الحالات نستخدم أقرب موعد آمن حسب اختيارك.</p>
-      <div id="summary" class="mt-3 text-slate-700 dark:text-slate-200"></div>
-      <div id="dueBanner" class="mt-3 hidden p-3 rounded-xl border text-sm"></div>
-      <div id="details" class="mt-4 space-y-3"></div>
-      <div id="disclaimer" class="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-sm">
-        تنبيه: هذه أداة تثقيفية ولا تُغني عن التقييم الطبي.
-      </div>
-    </section>
-
-    <footer class="max-w-5xl mx-auto px-1 mt-10 mb-8 text-xs text-slate-500 dark:text-slate-400">
-      <p id="footerText">© 2025 جميع الحقوق محفوظة لسُلطان عبد الرحمن الحسن. Ophth-Scheduler™ — يُحظر نسخ أو إعادة توزيع أو استخراج أو إجراء هندسة عكسية دون إذن.</p>
-    </footer>
   </main>
 
-  <script>
-  /* ===== Theme ===== */
-  function setTheme(th){
-    var root=document.documentElement;
-    if(th==='dark'){root.classList.add('dark');root.classList.remove('light');}
-    else {root.classList.remove('dark');root.classList.add('light'); th='light';}
-    try{localStorage.setItem('oph_theme', th);}catch(e){}
-  }
-  (function(){ try{ setTheme(localStorage.getItem('oph_theme')||'light'); }catch(e){ setTheme('light'); } })();
+  <footer class="site-footer">
+    <div class="container footer-row"><span>© 2026 Sultan Abdulrahman Alhassan · Ophth-Scheduler™</span><span class="footer-links"><a href="/privacy.html" data-i18n="privacy">الخصوصية</a><a href="/terms.html" data-i18n="terms">الشروط والتنبيه الطبي</a><a href="mailto:Sultan.Alhassan@hotmail.com" data-i18n="contact">تواصل</a></span></div>
+  </footer>
 
-  /* ===== i18n ===== */
-  var currentLang = 'ar';
-  var TR = {
-    ar: {
-      title:"حاسبة مواعيد زيارة طبيب العيون",
-      subtitle:"اختر الحالات، أدخل عمرك/فئتك العمرية وتاريخ آخر زيارة، وسنحسب أقرب موعد.",
-      ageGroupToggle:"استخدام الفئة العمرية بدلاً من تاريخ الميلاد",
-      ageGroup:"الفئة العمرية", helpAgeGroup:"اختر فقط إذا لم ترغب بإدخال تاريخ الميلاد.",
-      dob:"تاريخ الميلاد", helpDob:"يُستخدم لحساب الفئة العمرية.",
-      lastVisit:"تاريخ آخر زيارة لطبيب العيون",
-      noOphthVisit:"لا توجد لدي زيارات سابقة لطبيب العيون",
-      asapMsg:"في أقرب وقت ممكن من أجل سلامتك ومن حرصنا عليك.",
-      helpLastVisit:"مثال: 2024-12-05. لا تقبل تاريخًا مستقبليًا.",
-      errRequiredDate:"الرجاء إدخال تاريخ آخر زيارة أو اختر خيار عدم وجود زيارات.",
-      errFutureDate:"لا يمكن أن يكون التاريخ في المستقبل.",
-      errRequiredDob:"الرجاء إدخال تاريخ الميلاد أو اختر الفئة العمرية.",
-      condHeader:"اختر الحالات/الظروف لديك", condHelper:"يمكنك اختيار أكثر من حالة؛ سنعرض أقرب موعد.",
-      extraHeader:"معلومات إضافية مطلوبة لبعض الحالات",
-      dmSeverity:"شدة السكري (لاعتلال الشبكية)",
-      optSevere:"شديد (زيارة خلال 3 أشهر)", optModerate:"متوسط (خلال 6 أشهر)", optMild:"بسيط (خلال 9 أشهر)", optUnknown:"لا أعرف (سنة واحدة)",
-      tedActive:"نشِط حاليًا (مرض عين درقي)", helpTed:"نشِط: كل 3–6 أشهر. مستقر: سنوي.",
-      btnCalc:"احسب الزيارة القادمة", btnReset:"إعادة ضبط", btnPrint:"طباعة/حفظ PDF",
-      resultsTitle:"النتيجة", lastVisitShort:"تاريخ آخر زيارة", age:"العمر", ageGroupLabel:"الفئة العمرية",
-      earliest:"أقرب موعد موصى به", noneAuto:"لا يوجد تاريخ محدد تلقائيًا — راجع التفاصيل.",
-      basis:"الأساس", nextVisit:"الزيارة القادمة", window:"نافذة المتابعة",
-      ruleExplain:"عند تعدد الحالات نستخدم أقرب موعد آمن حسب اختيارك.",
-      earliestOnly:"عرض الأقرب فقط", copyShare:"نسخ/مشاركة", addCalendar:"إضافة إلى التقويم (.ics)",
-      dueNow:"مستحق الآن", overdueBy:function(d){return "متأخر بـ "+d+" يوم";}, dueIn:function(d){return "متبقٍ "+d+" يوم";},
-      contact:{summary:"تواصل", email:"البريد الإلكتروني", phone:"الهاتف"},
-      actionsTitle:"أدوات النتيجة",
-      disclaimer:"تنبيه: هذه أداة تثقيفية ولا تُغني عن التقييم الطبي.",
-      footer:"© 2025 جميع الحقوق محفوظة لسُلطان عبد الرحمن الحسن. Ophth-Scheduler™ — يُحظر نسخ أو إعادة توزيع أو استخراج أو إجراء هندسة عكسية دون إذن.",
-      tx:{ t1dm:"السكري النوع الأول (بالغون)", t2dm:"السكري النوع الثاني (بالغون)",
-           antiVEGF:"مضادات عامل نمو بطانة الأوعية الدموية ( حقن داخل العين )",
-           hba1c:"السكر التراكمي أعلى من الطبيعي",
-           glp1:"استخدام سيماجلوتايد (أوزمبيك) أو تيرزيباتايد (مونجارو)",
-           glauSus:"مشتبه ماء أزرق / ارتفاع ضغط العين", fhGlau:"قرابة درجة أولى لمريض ماء أزرق",
-           highMy:"قصر نظر شديد (≤ −6.0D أو طول محوري > 26 مم)",
-           ted:"مرض عين درقي (غريفز)", noRisk:"بالغون بلا عوامل خطورة",
-           retLaser:"إجراء ليزر للشبكية" },
-      // THEME LABELS
-      themeLight:"فاتح", themeDark:"داكن",
-      // Font controls
-      fontMinus:"أ−", fontPlus:"أ+", fontReset:"إرجاع 100%",
-      presetS:"صغير", presetD:"افتراضي", presetL:"كبير", presetXL:"أكبر",
-      fontHelp:"اضبط الحجم بالأزرار أو اختر حجمًا محددًا."
-    },
-    en: {
-      title:"Ophthalmology Visit Scheduler",
-      subtitle:"Select your conditions, enter DOB or age group and last visit date, and we’ll compute the next exam.",
-      ageGroupToggle:"Use age group instead of date of birth",
-      ageGroup:"Age group", helpAgeGroup:"Use this only if you prefer not to enter DOB.",
-      dob:"Date of birth", helpDob:"Used to determine age group.",
-      lastVisit:"Last ophthalmology visit date",
-      noOphthVisit:"I have no visit to the ophthalmologist",
-      asapMsg:"As soon as possible for your safety and out of our concern for you.",
-      helpLastVisit:"Example: 2024-12-05. Future dates are not allowed.",
-      errRequiredDate:"Enter the last visit date or check the no-visit option.",
-      errFutureDate:"Date cannot be in the future.",
-      errRequiredDob:"Please enter date of birth or choose an age group.",
-      condHeader:"Select your conditions", condHelper:"You can choose multiple; we’ll suggest the earliest date.",
-      extraHeader:"Additional info required for some conditions",
-      dmSeverity:"Diabetes severity (for retinopathy follow-up)",
-      optSevere:"Severe (in 3 months)", optModerate:"Moderate (in 6 months)", optMild:"Mild (in 9 months)", optUnknown:"I don’t know (in 1 year)",
-      tedActive:"Currently active (thyroid eye disease)", helpTed:"Active: every 3–6 months. Stable: annually.",
-      btnCalc:"Calculate next visit", btnReset:"Reset", btnPrint:"Print / Save PDF",
-      resultsTitle:"Result", lastVisitShort:"Last visit", age:"Age", ageGroupLabel:"Age group",
-      earliest:"Earliest recommended", noneAuto:"No automatic date — see details.",
-      basis:"Basis", nextVisit:"Next visit", window:"Follow-up window",
-      ruleExplain:"If multiple conditions exist, we use the earliest safe interval.",
-      earliestOnly:"Show only earliest", copyShare:"Copy / Share", addCalendar:"Add to Calendar (.ics)",
-      dueNow:"Due now", overdueBy:function(d){return "Overdue by "+d+" day"+(d===1?"":"s");}, dueIn:function(d){return "Due in "+d+" day"+(d===1?"":"s");},
-      contact:{summary:"Contact", email:"Email", phone:"Phone"},
-      actionsTitle:"Result tools",
-      disclaimer:"Note: This is an educational tool and does not replace professional medical evaluation.",
-      footer:"© 2025 Sultan Abdulrahman Alhassan. Ophth-Scheduler™ — Unauthorized copying, redistribution, scraping, or reverse engineering is prohibited.",
-      tx:{ t1dm:"Type 1 diabetes (adults)", t2dm:"Type 2 diabetes (adults)",
-           antiVEGF:"On anti-VEGF therapy (injections inside the eye)",
-           hba1c:"HbA1c above normal",
-           glp1:"Using semaglutide (Ozempic) or tirzepatide (Mounjaro)",
-           glauSus:"Glaucoma suspect / ocular hypertension", fhGlau:"First-degree relative of glaucoma",
-           highMy:"High myopia (≤ −6.0D or axial length > 26 mm)",
-           ted:"Thyroid eye disease (Graves)", noRisk:"Adults without known risk factors",
-           retLaser:"Undergone retinal laser" },
-      themeLight:"Light", themeDark:"Dark",
-      fontMinus:"A−", fontPlus:"A+", fontReset:"Reset 100%",
-      presetS:"Small", presetD:"Default", presetL:"Large", presetXL:"Extra-large",
-      fontHelp:"Use the buttons or pick a preset."
-    }
-  };
-
-  function setLang(lang){
-    currentLang = (lang==='en')?'en':'ar';
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir  = (currentLang==='ar')?'rtl':'ltr';
-
-    // Static text
-    setText('title', TR[currentLang].title);
-    setText('subtitle', TR[currentLang].subtitle);
-    setText('lblAgeGroupToggle', TR[currentLang].ageGroupToggle);
-    setText('lblDob', TR[currentLang].dob);
-    setText('helpDob', TR[currentLang].helpDob);
-    setText('lblLastVisit', TR[currentLang].lastVisit);
-    setText('lblNoOphthVisit', TR[currentLang].noOphthVisit);
-    setText('helpLastVisit', TR[currentLang].helpLastVisit);
-    setText('condHeader', TR[currentLang].condHeader);
-    setText('condHelper', TR[currentLang].condHelper);
-    setText('extraHeader', TR[currentLang].extraHeader);
-    setText('lblDmSeverity', TR[currentLang].dmSeverity);
-    setText('optSevere', TR[currentLang].optSevere);
-    setText('optModerate', TR[currentLang].optModerate);
-    setText('optMild', TR[currentLang].optMild);
-    setText('optUnknown', TR[currentLang].optUnknown);
-    setText('lblTedActive', TR[currentLang].tedActive);
-    setText('helpTed', TR[currentLang].helpTed);
-    setText('btnCalc', TR[currentLang].btnCalc);
-    setText('resetBtn', TR[currentLang].btnReset);
-    setText('resultsTitle', TR[currentLang].resultsTitle);
-    setText('ruleExplain', TR[currentLang].ruleExplain);
-    setText('lblEarliestOnly', TR[currentLang].earliestOnly);
-    setText('contactSummary', TR[currentLang].contact.summary);
-    setText('contactEmailLabel', TR[currentLang].contact.email);
-    setText('contactPhoneLabel', TR[currentLang].contact.phone);
-    setText('lblAgeGroup', TR[currentLang].ageGroup);
-    setText('helpAgeGroup', TR[currentLang].helpAgeGroup);
-
-    // Result tools
-    setText('actionsTitle', TR[currentLang].actionsTitle);
-    setText('copyBtn', TR[currentLang].copyShare);
-    setText('icsBtn', TR[currentLang].addCalendar);
-    setText('printBtn', TR[currentLang].btnPrint);
-
-    // Footer + disclaimer
-    setText('disclaimer',   TR[currentLang].disclaimer);
-    setText('footerText',   TR[currentLang].footer);
-
-    // Condition labels
-    setText('tx_t1dm', TR[currentLang].tx.t1dm);
-    setText('tx_t2dm', TR[currentLang].tx.t2dm);
-    setText('tx_antiVEGF', TR[currentLang].tx.antiVEGF);
-    setText('tx_hba1c', TR[currentLang].tx.hba1c);
-    setText('tx_glp1', TR[currentLang].tx.glp1);
-    setText('tx_glauSus', TR[currentLang].tx.glauSus);
-    setText('tx_fhGlau', TR[currentLang].tx.fhGlau);
-    setText('tx_highMy', TR[currentLang].tx.highMy);
-    setText('tx_ted', TR[currentLang].tx.ted);
-    setText('tx_retLaser', TR[currentLang].tx.retLaser);
-    setText('tx_noRisk', TR[currentLang].tx.noRisk);
-
-    // Font controls
-    setText('fontMinus', TR[currentLang].fontMinus);
-    setText('fontPlus',  TR[currentLang].fontPlus);
-    setText('fontReset', TR[currentLang].fontReset);
-    setText('chipS', TR[currentLang].presetS);
-    setText('chipD', TR[currentLang].presetD);
-    setText('chipL', TR[currentLang].presetL);
-    setText('chipXL', TR[currentLang].presetXL);
-    setText('fontHelp', TR[currentLang].fontHelp);
-
-    // Theme labels
-    setText('theme-light', TR[currentLang].themeLight);
-    setText('theme-dark',  TR[currentLang].themeDark);
-  }
-  function setText(id, txt){ var el=document.getElementById(id); if(el){ el.textContent = txt; } }
-
-  /* ===== Helpers ===== */
-  function addYears(d,n){ var x=new Date(d); x.setFullYear(x.getFullYear()+n); return x; }
-  function addMonths(d,n){ var x=new Date(d); x.setMonth(x.getMonth()+n); return x; }
-  function fmt(date){ if(!(date instanceof Date)||isNaN(date))return'—'; var dd=('0'+date.getDate()).slice(-2); var mm=('0'+(date.getMonth()+1)).slice(-2); var yy=date.getFullYear(); return dd+'/'+mm+'/'+yy; }
-  function calcAgeYears(dob){ if(!dob)return null; var t=new Date(); var a=t.getFullYear()-dob.getFullYear(); var m=t.getMonth()-dob.getMonth(); if(m<0||(m===0&&t.getDate()<dob.getDate()))a--; return a; }
-  function daysBetween(a,b){ var MS=86400000; var a0=new Date(a); a0.setHours(0,0,0,0); var b0=new Date(b); b0.setHours(0,0,0,0); return Math.round((a0-b0)/MS); }
-
-  function showFieldError(id,msg){ var i=document.getElementById(id), e=document.getElementById(id+'Error'); if(!i||!e)return; e.textContent=msg; e.classList.remove('hidden'); i.classList.add('invalid'); }
-  function clearFieldError(id){ var i=document.getElementById(id), e=document.getElementById(id+'Error'); if(!i||!e)return; e.textContent=''; e.classList.add('hidden'); i.classList.remove('invalid'); }
-
-  /* ===== UI toggles ===== */
-  function toggleAgeMode(){
-    var on=document.getElementById('ageGroupToggle').checked;
-    document.getElementById('dobWrap').classList.toggle('hidden', on);
-    document.getElementById('ageGroupWrap').classList.toggle('hidden', !on);
-  }
-  function onNoVisitToggle(){
-    var on=document.getElementById('noOphthVisit').checked;
-    var last=document.getElementById('lastVisit');
-    if(on){ last.value=''; clearFieldError('lastVisit'); last.setAttribute('disabled','disabled'); }
-    else { last.removeAttribute('disabled'); }
-  }
-  function toggleExtra(){
-    var dm = document.getElementById('c_t1dm').checked || document.getElementById('c_t2dm').checked;
-    var ted= document.getElementById('c_ted').checked;
-    var any = dm || ted;
-    document.getElementById('conditionalFields').classList.toggle('hidden', !any);
-    document.getElementById('extra-dm-severity').classList.toggle('hidden', !dm);
-    document.getElementById('extra-ted').classList.toggle('hidden', !ted);
-  }
-  function rebuildAfterToggle(){
-    if(!document.getElementById('resultsCard').classList.contains('hidden')) onCalc();
-  }
-
-  /* ===== MAIN CALC ===== */
-  function dmNextBySeverity(baseDate){
-    var radios=document.getElementsByName('dmSeverity'); var v='unknown';
-    for(var i=0;i<radios.length;i++){ if(radios[i].checked){ v=radios[i].value; break; } }
-    if(v==='severe')   return addMonths(baseDate,3);
-    if(v==='moderate') return addMonths(baseDate,6);
-    if(v==='mild')     return addMonths(baseDate,9);
-    return addYears(baseDate,1);
-  }
-
-  function onCalc(){
-    var noVisit=document.getElementById('noOphthVisit').checked;
-    var today=new Date(); today.setHours(0,0,0,0);
-    var lastVisit=null;
-
-    if(!noVisit){
-      var lastStr=document.getElementById('lastVisit').value;
-      if(!lastStr){ showFieldError('lastVisit', TR[currentLang].errRequiredDate); return false; }
-      clearFieldError('lastVisit');
-      lastVisit=new Date(lastStr);
-      if(lastVisit>today){ showFieldError('lastVisit', TR[currentLang].errFutureDate); return false; }
-      clearFieldError('lastVisit');
-    }
-
-    var ageYears=null, ageGroupLabel='';
-    if(document.getElementById('ageGroupToggle').checked){
-      var g=document.getElementById('ageGroup').value;
-      if(g==='u40'){ ageYears=30; ageGroupLabel=(currentLang==='ar'?'< 40':'< 40'); }
-      if(g==='40-54'){ ageYears=45; ageGroupLabel='40–54'; }
-      if(g==='55-64'){ ageYears=60; ageGroupLabel='55–64'; }
-      if(g==='>=65'){ ageYears=70; ageGroupLabel='≥65'; }
-      clearFieldError('dob');
-    }else{
-      var dobStr=document.getElementById('dob').value;
-      if(!dobStr){ showFieldError('dob', TR[currentLang].errRequiredDob); return false; }
-      clearFieldError('dob'); ageYears=calcAgeYears(new Date(dobStr));
-    }
-
-    document.getElementById('resultsCard').classList.remove('hidden');
-
-    if(noVisit){
-      document.getElementById('summary').innerHTML = '<div class="text-lg font-semibold">'+TR[currentLang].asapMsg+'</div>';
-      document.getElementById('dueBanner').classList.add('hidden');
-      document.getElementById('details').innerHTML='';
-      return false;
-    }
-
-    var recs=[];
-    function pushAnnual(label, basisOverride){
-      recs.push({label:label, next:addYears(lastVisit,1), window:null, basis: basisOverride || (currentLang==='ar'?'فحص سنوي':'Annual')});
-    }
-
-    if(document.getElementById('c_glauSus').checked) pushAnnual(getTx('glauSus'));
-    if(document.getElementById('c_fhGlau').checked)  pushAnnual(getTx('fhGlau'));
-    if(document.getElementById('c_highMy').checked)  pushAnnual(getTx('highMy'));
-
-    if(document.getElementById('c_noRisk').checked){
-      if(ageYears<40){
-        // no automatic rule
-      } else if(ageYears<=54){
-        recs.push({label:getTx('noRisk'), next:addYears(lastVisit,2), window:[addYears(lastVisit,2), addYears(lastVisit,4)], basis:"40–54: كل 2–4 سنوات / every 2–4 yrs"});
-      } else if(ageYears<=64){
-        recs.push({label:getTx('noRisk'), next:addYears(lastVisit,1), window:[addYears(lastVisit,1), addYears(lastVisit,3)], basis:"55–64: كل 1–3 سنوات / every 1–3 yrs"});
-      } else {
-        recs.push({label:getTx('noRisk'), next:addYears(lastVisit,1), window:[addYears(lastVisit,1), addYears(lastVisit,2)], basis:"≥65: كل 1–2 سنة / every 1–2 yrs"});
-      }
-    }
-
-    if(document.getElementById('c_t1dm').checked) recs.push({label:getTx('t1dm'), next:dmNextBySeverity(lastVisit), window:null, basis:(currentLang==='ar'?'حسب شدة السكري':'By diabetes severity')});
-    if(document.getElementById('c_t2dm').checked) recs.push({label:getTx('t2dm'), next:dmNextBySeverity(lastVisit), window:null, basis:(currentLang==='ar'?'حسب شدة السكري':'By diabetes severity')});
-
-    if(document.getElementById('c_antiVEGF').checked) recs.push({label:getTx('antiVEGF'), next:addMonths(lastVisit,1), window:null, basis:(currentLang==='ar'?'متابعة شهرية أثناء العلاج':'Monthly during active therapy')});
-
-    if(document.getElementById('c_hba1c').checked) pushAnnual(getTx('hba1c'), (currentLang==='ar'?'ارتفاع HbA1c: سنوي':'HbA1c high: yearly'));
-
-    if(document.getElementById('c_glp1').checked) pushAnnual(getTx('glp1'), (currentLang==='ar'?'GLP-1/GIP: سنوي':'GLP-1/GIP: yearly'));
-
-    if(document.getElementById('c_ted').checked){
-      var active = document.getElementById('tedActive').checked;
-      if(active){
-        var early=addMonths(lastVisit,3), late=addMonths(lastVisit,6);
-        recs.push({label:getTx('ted'), next:early, window:[early,late], basis:(currentLang==='ar'?'نشِط: كل 3–6 أشهر':'Active: every 3–6 months')});
-      } else {
-        pushAnnual(getTx('ted'), (currentLang==='ar'?'مستقر: سنوي':'Stable: annual'));
-      }
-    }
-
-    if(document.getElementById('c_retLaser').checked){
-      pushAnnual(getTx('retLaser'), (currentLang==='ar'?'بعد الليزر الشبكي: سنوي':'After retinal laser: yearly'));
-    }
-
-    recs = recs.filter(function(r){return r.next instanceof Date && !isNaN(r.next);})
-               .sort(function(a,b){return a.next - b.next;});
-    var earliest = recs.length?recs[0]:null;
-
-    var s = '<div class="text-sm text-slate-600 dark:text-slate-300">'+TR[currentLang].lastVisitShort+': <span class="font-medium">'+fmt(lastVisit)+'</span>';
-    s += ' • '+(document.getElementById('ageGroupToggle').checked?TR[currentLang].ageGroupLabel:TR[currentLang].age)+': <span class="font-medium">'+(document.getElementById('ageGroupToggle').checked?ageGroupLabel:ageYears)+'</span>';
-    s += '</div>';
-
-    var dueBanner=document.getElementById('dueBanner');
-    if(earliest){
-      s += '<div class="mt-2 text-lg">'+TR[currentLang].earliest+': <span class="font-semibold">'+fmt(earliest.next)+'</span></div>';
-      var diff=daysBetween(earliest.next, new Date());
-      dueBanner.classList.remove('hidden');
-      if(diff<0){ dueBanner.className='mt-3 p-3 rounded-xl border text-sm bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-700 text-rose-800 dark:text-rose-200'; dueBanner.textContent = (currentLang==='ar'?TR.ar.overdueBy(-diff):TR.en.overdueBy(-diff)); }
-      else if(diff===0){ dueBanner.className='mt-3 p-3 rounded-xl border text-sm bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200'; dueBanner.textContent = TR[currentLang].dueNow; }
-      else { dueBanner.className='mt-3 p-3 rounded-xl border text-sm bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200'; dueBanner.textContent = (currentLang==='ar'?TR.ar.dueIn(diff):TR.en.dueIn(diff)); }
-    } else {
-      s += '<div class="mt-2 text-lg">'+TR[currentLang].noneAuto+'</div>';
-      dueBanner.classList.add('hidden');
-    }
-    document.getElementById('summary').innerHTML = s;
-
-    var container=document.getElementById('details'); container.innerHTML='';
-    var showEarliestOnly=document.getElementById('earliestOnly').checked;
-    var list = (showEarliestOnly && earliest)?[earliest]:recs;
-    for(var i=0;i<list.length;i++){
-      var r=list[i];
-      var card=document.createElement('div'); card.className='p-3 border rounded-xl bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600';
-      var windowTxt=r.window? (TR[currentLang].window+': '+fmt(r.window[0])+' → '+fmt(r.window[1])) : '';
-      card.innerHTML = '<div class="font-medium">'+r.label+'</div>'
-        + '<div class="text-sm text-slate-700 dark:text-slate-300">'+TR[currentLang].basis+': '+r.basis+'</div>'
-        + '<div class="text-sm">'+TR[currentLang].nextVisit+': <span class="font-semibold">'+fmt(r.next)+'</span>'
-        + (windowTxt?'<div class="text-xs text-slate-600 dark:text-slate-400 mt-1">'+windowTxt+'</div>':'')
-        + '</div>';
-      container.appendChild(card);
-    }
-
-    return false;
-  }
-
-  /* ===== Text size controls (Stepper + Presets) ===== */
-  var FONT_MIN=80, FONT_MAX=170, FONT_STEP=5;
-  function applyFontScale(v){
-    document.documentElement.style.fontSize = v + '%';
-    var lab = document.getElementById('fontPct'); if(lab) lab.textContent = v + '%';
-    // update chips
-    var radios = document.querySelectorAll('input[name="fontPreset"]');
-    var closestDiff = 1e9, target=null;
-    radios.forEach(function(r){
-      var val=parseInt(r.value,10), d=Math.abs(val-v);
-      if(d<closestDiff){closestDiff=d; target=r;}
-    });
-    radios.forEach(function(r){
-      var lab = r.id==='presetS'?'chipS': r.id==='presetD'?'chipD': r.id==='presetL'?'chipL':'chipXL';
-      var el = document.getElementById(lab);
-      if(r===target){ r.checked=true; el.classList.remove('chip-off'); el.classList.add('chip-on'); }
-      else { r.checked=false; el.classList.remove('chip-on'); el.classList.add('chip-off'); }
-    });
-    try{ localStorage.setItem('oph_font_scale', String(v)); }catch(e){}
-  }
-  function setFontScale(v){
-    v = Math.max(FONT_MIN, Math.min(FONT_MAX, parseInt(v,10)||100));
-    applyFontScale(v);
-  }
-  function incFont(){ var cur=getCurrentScale(); setFontScale(cur+FONT_STEP); }
-  function decFont(){ var cur=getCurrentScale(); setFontScale(cur-FONT_STEP); }
-  function resetFont(){ setFontScale(100); }
-  function getCurrentScale(){
-    var saved=100; try{ var raw=parseInt(localStorage.getItem('oph_font_scale'),10); if(!isNaN(raw)) saved=raw; }catch(e){}
-    return saved;
-  }
-  function wireFontPresets(){
-    document.querySelectorAll('input[name="fontPreset"]').forEach(function(r){
-      r.addEventListener('change', function(e){ setFontScale(parseInt(e.target.value,10)); });
-    });
-  }
-  (function initFont(){
-    wireFontPresets();
-    var saved = 100;
-    try{ var raw = parseInt(localStorage.getItem('oph_font_scale'),10); if(!isNaN(raw)) saved=raw; }catch(e){}
-    applyFontScale(saved);
-  })();
-  /* ===== End text size ===== */
-
-  function downloadIcs(){
-    var m=document.getElementById('summary').innerText.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/);
-    if(!m) return; var dd=m[1], mm=m[2], yy=m[3]; var ymd=yy+mm+dd;
-    var title=(currentLang==='ar')?'موعد فحص عيون موصى به':'Recommended ophthalmology visit';
-    var ics="BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//OphthoScheduler//EN\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nUID:"+Date.now()+"@ophtho\nDTSTAMP:"+ymd+"T080000Z\nDTSTART;VALUE=DATE:"+ymd+"\nSUMMARY:"+title+"\nEND:VEVENT\nEND:VCALENDAR";
-    var blob=new Blob([ics],{type:'text/calendar;charset=utf-8'}); var url=URL.createObjectURL(blob);
-    var a=document.createElement('a'); a.href=url; a.download='ophthalmology-visit.ics'; a.click(); URL.revokeObjectURL(url);
-  }
-  function copyShare(){
-    var txt = document.getElementById('summary').innerText.trim();
-    if(!txt) return;
-    (async ()=> {
-      try{ if(navigator.share){ await navigator.share({ title: document.title, text: txt }); return; } }catch(e){}
-      try{ if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(txt); alert(currentLang==='ar'?'تم النسخ.':'Copied.'); return; } }catch(e){}
-      var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
-      try{ document.execCommand('copy'); alert(currentLang==='ar'?'تم النسخ.':'Copied.'); }catch(e){}
-      document.body.removeChild(ta);
-    })();
-  }
-  function getTx(key){ return TR[currentLang].tx[key]; }
-
-  // Init language (Arabic default) and ensure theme labels localized
-  setLang('ar');
-  </script>
+  <script src="/app.js" defer></script>
 </body>
 </html>
