@@ -1,0 +1,15 @@
+{
+  "name": "ophth-scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bilingual ophthalmology follow-up scheduler",
+  "scripts": {
+    "test": "playwright test",
+    "validate:html": "html-validate index.html privacy.html terms.html 404.html",
+    "check": "npm run validate:html && npm test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "html-validate": "^9.7.1"
+  }
+}
