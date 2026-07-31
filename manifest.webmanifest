@@ -1,0 +1,16 @@
+{
+  "name": "Ophth-Scheduler",
+  "short_name": "Ophth",
+  "description": "Bilingual ophthalmology follow-up scheduler.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "categories": ["medical", "health", "utilities"],
+  "icons": [
+    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
