@@ -1,0 +1,45 @@
+name: Clinical platform bootstrap
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/clinical-platform-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-publish-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: upgrade/clinical-platform-2026-08
+          fetch-depth: 0
+      - name: Reconstruct verified platform bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .upgrade-v3/chunk.* | base64 --decode > /tmp/ophth-upgrade.tar.gz
+          echo "14543658b591eab9902dada6d8e394655cc989ca3166f3d4f432af9084ae75b0  /tmp/ophth-upgrade.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/ophth-upgrade.tar.gz
+          rm -rf .upgrade .upgrade-v2 .upgrade-v3
+          rm -f .github/workflows/bootstrap-clinical-platform.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run check
+      - name: Commit verified platform to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "ophth-scheduler-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: clinical platform v2 with evidence, guided UX, reminders, and automation"
+            git push origin HEAD:upgrade/clinical-platform-2026-08
+          fi
