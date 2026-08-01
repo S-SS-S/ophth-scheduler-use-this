@@ -1,0 +1,46 @@
+name: Bootstrap clinical platform upgrade
+
+on:
+  push:
+    branches:
+      - upgrade/clinical-platform-2026-08
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: upgrade/clinical-platform-2026-08
+          fetch-depth: 0
+      - name: Decode and verify upgrade bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .upgrade/bundle.part.* | base64 --decode > /tmp/ophth-upgrade.tar.gz
+          echo "65a1e702443f97cf4fdf0990fd5b1cb2eb0d037048eb66fa70547fec2e235bcb  /tmp/ophth-upgrade.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/ophth-upgrade.tar.gz
+          rm -rf .upgrade
+          rm -f .github/workflows/bootstrap-clinical-platform.yml
+      - name: Validate generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app.js
+          node --check education.js
+          node --check sw.js
+          node scripts/validate-rules.mjs
+          node scripts/check-static.mjs
+      - name: Commit generated upgrade
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "ophth-scheduler-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: clinical platform v2 with evidence, guided UX, reminders, and automation"
+          git push origin HEAD:upgrade/clinical-platform-2026-08

@@ -1,0 +1,1 @@
+Trigger the pull-request quality workflow after attaching the verified clinical platform bundle.
